@@ -1,0 +1,70 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.spec
+
+# PyInstaller / Build Artifacts
+build/
+dist/
+*.manifest
+!assets/oxplayer_compatibility.manifest
+
+# Heavy binaries and VLC runtime (VLC runtime is bundled via build_exe.py from system or core_bin)
+core_bin/
+RELEASE_ASSETS/
+
+# Installer output in root
+OXPlayer_Setup.exe
+OXPlayer.exe
+
+# Unit test / scratch
+scratch/
+test_*.py
+*.log
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Windows system files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
