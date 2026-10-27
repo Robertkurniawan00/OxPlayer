@@ -82,8 +82,8 @@ Bagi pengguna akhir di Windows 7, 8, 8.1, 10, dan 11 (64-bit):
 
 1. **Clone Repositori**:
    ```bash
-   git clone https://github.com/<username>/OXPlayer.git
-   cd OXPlayer
+   git clone https://github.com/Robertkurniawan00/OxPlayer.git
+   cd OxPlayer
    ```
 
 2. **Buat & Aktifkan Virtual Environment (Opsional tapi disarankan)**:
