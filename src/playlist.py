@@ -333,7 +333,11 @@ class PlaylistWidget(QWidget):
             return
 
         if self.shuffle_mode:
-            next_idx = random.randint(0, len(self.items) - 1)
+            if len(self.items) > 1:
+                choices = [i for i in range(len(self.items)) if i != self.current_index]
+                next_idx = random.choice(choices)
+            else:
+                next_idx = 0
         else:
             next_idx = self.current_index + 1
 

@@ -13,6 +13,7 @@ Integrates:
 
 import os
 import sys
+import time
 import json
 import ctypes
 from ctypes import wintypes
@@ -63,6 +64,7 @@ from PyQt6.QtGui import (
 )
 
 from .engine import PlayerEngine, parse_timestamp_to_ms
+import vlc
 from .osd import OSDOverlay, LiveStatsHUD
 from .resume_banner import ResumePromptBanner
 from .next_episode_banner import NextEpisodeBanner
@@ -648,7 +650,7 @@ class ModernFloatingDock(QWidget):
         self.position_on_player()
         if not self.isVisible():
             self.show()
-        if self.opacity_effect.opacity() < 0.95 and self.anim.state() != QPropertyAnimation.State.Running:
+        if self.opacity_effect.opacity() < 0.99:
             self.anim.stop()
             self.anim.setStartValue(self.opacity_effect.opacity())
             self.anim.setEndValue(1.0)
@@ -659,7 +661,7 @@ class ModernFloatingDock(QWidget):
     def fade_out(self):
         if self.is_dragging or not self.main_win.engine.is_playing():
             return
-        if self.opacity_effect.opacity() > 0.05 and self.anim.state() != QPropertyAnimation.State.Running:
+        if self.opacity_effect.opacity() > 0.01:
             self.anim.stop()
             self.anim.setStartValue(self.opacity_effect.opacity())
             self.anim.setEndValue(0.0)
@@ -1685,6 +1687,9 @@ class MainWindow(QMainWindow):
             else:
                 self.playlist.play_next()
             return True
+        elif key == Qt.Key.Key_U and (modifiers & Qt.KeyboardModifier.ControlModifier):
+            self.open_stream_dialog()
+            return True
         elif key == Qt.Key.Key_P and not (modifiers & Qt.KeyboardModifier.ControlModifier):
             self.playlist.play_previous()
             return True
@@ -1870,12 +1875,12 @@ class MainWindow(QMainWindow):
             self.pip_window.update_status(is_playing, cur_str, self.engine.is_muted())
 
         # Binge-Watching Next Episode Trigger (Netflix / Crunchyroll style)
-        import vlc
         state = self.engine.get_state()
+        state_ended = getattr(vlc.State, "Ended", 6) if vlc else 6
         if getattr(self, "auto_binge_watching", True) and not getattr(self, "_next_episode_cancelled_for_media", False):
             if tot_ms >= 30000:
                 rem_ms = tot_ms - cur_ms
-                if (rem_ms <= 16000 or state == vlc.State.Ended) and is_playing:
+                if (rem_ms <= 16000 or state == state_ended) and is_playing:
                     if not self._next_episode_prompt_active:
                         next_item = self.playlist.get_next_item() if hasattr(self, "playlist") else None
                         if next_item and hasattr(self, "next_episode_banner"):
@@ -1888,7 +1893,7 @@ class MainWindow(QMainWindow):
                         self.next_episode_banner.fade_out()
 
         # Automatic Playback Continuity (Auto-Next / Auto-Repeat) on media completion
-        if state == vlc.State.Ended:
+        if state == state_ended:
             if not self._media_ended_handled:
                 self._media_ended_handled = True
                 if hasattr(self, "next_episode_banner"):

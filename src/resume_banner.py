@@ -138,6 +138,7 @@ class ResumePromptBanner(QWidget):
         self.anim = QPropertyAnimation(self.opacity_effect, b"opacity")
         self.anim.setDuration(220)
         self.anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self.anim.finished.connect(self._on_fade_finished)
 
         self.auto_hide_timer = QTimer(self)
         self.auto_hide_timer.setSingleShot(True)
@@ -181,15 +182,10 @@ class ResumePromptBanner(QWidget):
         self.anim.stop()
         self.anim.setStartValue(self.opacity_effect.opacity())
         self.anim.setEndValue(0.0)
-        self.anim.finished.connect(self._on_fade_finished)
         self.anim.start()
 
     def _on_fade_finished(self):
-        try:
-            self.anim.finished.disconnect(self._on_fade_finished)
-        except Exception:
-            pass
-        if self.opacity_effect.opacity() == 0.0:
+        if self.opacity_effect.opacity() <= 0.05:
             self.hide()
             self.dismissed.emit()
 
