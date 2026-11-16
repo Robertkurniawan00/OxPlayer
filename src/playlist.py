@@ -275,12 +275,23 @@ class PlaylistWidget(QWidget):
             self._needs_ui_refresh = True
             return
         self._needs_ui_refresh = False
-        query = self.search_box.text().lower()
+        query = self.search_box.text().strip()
         self.list_widget.clear()
 
-        for idx, item in enumerate(self.items):
-            if query and query not in item.title.lower():
-                continue
+        if query:
+            try:
+                from src.sub_indexer import fuzzy_search_media
+                titles = [it.title for it in self.items]
+                results = fuzzy_search_media(query, titles)
+                indices_to_show = [r["index"] for r in results if 0 <= r.get("index", -1) < len(self.items)]
+            except Exception:
+                q_lower = query.lower()
+                indices_to_show = [i for i, it in enumerate(self.items) if q_lower in it.title.lower()]
+        else:
+            indices_to_show = list(range(len(self.items)))
+
+        for idx in indices_to_show:
+            item = self.items[idx]
             prefix = "▶ " if idx == self.current_index else f"{idx + 1}. "
             list_item = QListWidgetItem(f"{prefix}{item.title}")
             list_item.setData(Qt.ItemDataRole.UserRole, idx)

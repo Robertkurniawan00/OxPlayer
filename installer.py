@@ -267,7 +267,7 @@ class InstallWorker(QThread):
                     d_dir = os.path.join(self.target_dir, d_name)
                     if os.path.isdir(s_dir):
                         shutil.copytree(s_dir, d_dir, dirs_exist_ok=True)
-                for f_name in ["main.py", "requirements.txt", "OXPlayer_Launcher.vbs", "run_app.bat", "OXPlayer.exe"]:
+                for f_name in ["main.py", "requirements.txt", "OXPlayer_Launcher.vbs", "run_app.bat", "OXPlayer.exe", "OXPlayerLauncher.exe"]:
                     s_file = os.path.join(source_dir, f_name)
                     d_file = os.path.join(self.target_dir, f_name)
                     if os.path.isfile(s_file):

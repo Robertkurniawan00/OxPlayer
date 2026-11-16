@@ -1184,3 +1184,229 @@ class ContinueWatchingDialog(QDialog):
         if reply == QMessageBox.StandardButton.Yes:
             self.engine.clear_all_history()
             self._load_items()
+
+
+class SleepTimerDialog(QDialog):
+    """
+    Sleep Timer & Auto-Shutdown Utility (Ctrl+Shift+T).
+    Allows scheduling automatic playback stop, app close, sleep, or PC shutdown.
+    """
+    def __init__(self, current_remaining_sec: int, on_set_callback, on_cancel_callback, parent=None):
+        super().__init__(parent)
+        self.on_set_callback = on_set_callback
+        self.on_cancel_callback = on_cancel_callback
+        self.current_remaining = current_remaining_sec
+
+        self.setWindowTitle("Pengatur Waktu Tidur (Sleep Timer)")
+        self.setFixedSize(400, 310)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+        self._setup_ui()
+
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        layout.setContentsMargins(18, 18, 18, 18)
+
+        # Status header
+        status_box = QGroupBox("Status Pengatur Waktu")
+        s_layout = QVBoxLayout(status_box)
+        if self.current_remaining > 0:
+            m = self.current_remaining // 60
+            s = self.current_remaining % 60
+            self.status_lbl = QLabel(f"<b>Aktif:</b> Tersisa {m} menit {s} detik.")
+            self.status_lbl.setStyleSheet("color: #00F0FF; font-size: 13px;")
+        else:
+            self.status_lbl = QLabel("Pengatur waktu tidak aktif.")
+            self.status_lbl.setStyleSheet("color: #9ca3af; font-size: 13px;")
+        s_layout.addWidget(self.status_lbl)
+        layout.addWidget(status_box)
+
+        # Timer preset selection
+        form = QFormLayout()
+        self.duration_combo = QComboBox()
+        self.duration_combo.addItems([
+            "15 Menit",
+            "30 Menit",
+            "45 Menit",
+            "60 Menit",
+            "90 Menit",
+            "120 Menit",
+            "Di Akhir Berkas Saat Ini",
+            "Kustom"
+        ])
+        self.duration_combo.setCurrentIndex(1)  # Default 30 min
+        self.duration_combo.currentIndexChanged.connect(self._on_duration_changed)
+        form.addRow("Durasi Waktu:", self.duration_combo)
+
+        self.custom_spin = QSpinBox()
+        self.custom_spin.setRange(1, 720)
+        self.custom_spin.setValue(30)
+        self.custom_spin.setSuffix(" menit")
+        self.custom_spin.setEnabled(False)
+        form.addRow("Kustom Menit:", self.custom_spin)
+
+        # Action selection
+        self.action_combo = QComboBox()
+        self.action_combo.addItems([
+            "Hentikan Pemutaran (Stop Playback)",
+            "Tutup Aplikasi OXPlayer",
+            "Kunci Layar Windows (Lock PC)",
+            "Masuk Mode Tidur PC (Sleep)",
+            "Matikan Komputer (Shutdown)"
+        ])
+        form.addRow("Tindakan:", self.action_combo)
+        layout.addLayout(form)
+
+        layout.addStretch()
+
+        # Action buttons
+        btn_layout = QHBoxLayout()
+        if self.current_remaining > 0:
+            cancel_btn = QPushButton("Batalkan Timer")
+            cancel_btn.setStyleSheet("background-color: #7f1d1d; color: #fca5a5; font-weight: bold;")
+            cancel_btn.clicked.connect(self._cancel_timer)
+            btn_layout.addWidget(cancel_btn)
+
+        btn_layout.addStretch()
+
+        close_btn = QPushButton("Batal")
+        close_btn.clicked.connect(self.close)
+        btn_layout.addWidget(close_btn)
+
+        start_btn = QPushButton("Mulai Timer")
+        start_btn.setStyleSheet("background-color: #2563eb; color: #ffffff; font-weight: bold; padding: 6px 16px;")
+        start_btn.clicked.connect(self._start_timer)
+        btn_layout.addWidget(start_btn)
+
+        layout.addLayout(btn_layout)
+
+    def _on_duration_changed(self, idx: int):
+        self.custom_spin.setEnabled(idx == 7)
+
+    def _start_timer(self):
+        idx = self.duration_combo.currentIndex()
+        if idx == 0:
+            minutes = 15
+        elif idx == 1:
+            minutes = 30
+        elif idx == 2:
+            minutes = 45
+        elif idx == 3:
+            minutes = 60
+        elif idx == 4:
+            minutes = 90
+        elif idx == 5:
+            minutes = 120
+        elif idx == 6:
+            minutes = -1  # Special: End of current file
+        else:
+            minutes = self.custom_spin.value()
+
+        action = self.action_combo.currentIndex()
+        if self.on_set_callback:
+            self.on_set_callback(minutes, action)
+        self.close()
+
+    def _cancel_timer(self):
+        if self.on_cancel_callback:
+            self.on_cancel_callback()
+        self.close()
+
+
+class MediaValidatorDialog(QDialog):
+    """
+    Batch Media Health Validator & Playlist Exporter (powered by C# OXMediaCLI.exe).
+    """
+    def __init__(self, playlist_items: list, parent=None):
+        super().__init__(parent)
+        self.playlist_items = playlist_items
+        self.setWindowTitle("Verifikasi Integritas Media & Ekspor (OXMediaCLI)")
+        self.setMinimumSize(600, 420)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+        self._setup_ui()
+
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        layout.setContentsMargins(14, 14, 14, 14)
+
+        header = QLabel("<b>Pemeriksaan Integritas Berkas Media (C# High-Speed Engine)</b>")
+        header.setStyleSheet("font-size: 13px; color: #00F0FF;")
+        layout.addWidget(header)
+
+        self.list_widget = QListWidget()
+        self.list_widget.setStyleSheet("background-color: #141417; border: 1px solid #2e2e36; border-radius: 4px; font-family: Consolas, monospace;")
+        layout.addWidget(self.list_widget)
+
+        self.summary_lbl = QLabel(f"Total {len(self.playlist_items)} berkas dalam daftar putar saat ini.")
+        self.summary_lbl.setStyleSheet("color: #9ca3af;")
+        layout.addWidget(self.summary_lbl)
+
+        btn_row = QHBoxLayout()
+
+        verify_btn = QPushButton("Periksa Integritas Header")
+        verify_btn.setStyleSheet("background-color: #2563eb; color: #ffffff; font-weight: bold; padding: 6px 14px;")
+        verify_btn.clicked.connect(self._run_verification)
+        btn_row.addWidget(verify_btn)
+
+        export_m3u_btn = QPushButton("Ekspor ke M3U8")
+        export_m3u_btn.clicked.connect(self._export_m3u8)
+        btn_row.addWidget(export_m3u_btn)
+
+        btn_row.addStretch()
+
+        close_btn = QPushButton("Tutup")
+        close_btn.clicked.connect(self.close)
+        btn_row.addWidget(close_btn)
+
+        layout.addLayout(btn_row)
+
+    def _run_verification(self):
+        import subprocess
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cli_exe = os.path.join(base_dir, "core_bin", "OXMediaCLI.exe")
+
+        self.list_widget.clear()
+        if not os.path.exists(cli_exe):
+            self.list_widget.addItem("[!] OXMediaCLI.exe tidak ditemukan di core_bin.")
+            return
+
+        valid_count = 0
+        corrupt_count = 0
+
+        for item in self.playlist_items:
+            path = getattr(item, "path", str(item))
+            if not os.path.isfile(path):
+                self.list_widget.addItem(f"[SKIP] Bukan berkas lokal: {os.path.basename(path)}")
+                continue
+
+            try:
+                res = subprocess.run([cli_exe, "verify", path], capture_output=True, text=True, encoding="utf-8")
+                output = res.stdout.strip()
+                if res.returncode == 0:
+                    valid_count += 1
+                    it = QListWidgetItem(f"✓ [OK] {os.path.basename(path)}")
+                    it.setForeground(Qt.GlobalColor.green)
+                else:
+                    corrupt_count += 1
+                    it = QListWidgetItem(f"✗ [FAIL] {os.path.basename(path)} - Rusak / 0 bytes")
+                    it.setForeground(Qt.GlobalColor.red)
+                self.list_widget.addItem(it)
+            except Exception as e:
+                self.list_widget.addItem(f"[ERROR] {os.path.basename(path)}: {e}")
+
+        self.summary_lbl.setText(f"Hasil Verifikasi: {valid_count} Valid, {corrupt_count} Bermasalah.")
+
+    def _export_m3u8(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, "Simpan Playlist M3U8", "playlist.m3u8", "Playlist M3U8 (*.m3u8)")
+        if file_path:
+            try:
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write("#EXTM3U\n")
+                    for item in self.playlist_items:
+                        path = getattr(item, "path", str(item))
+                        title = getattr(item, "title", os.path.basename(path))
+                        f.write(f"#EXTINF:-1,{title}\n{path}\n")
+                QMessageBox.information(self, "Sukses", f"Playlist berhasil diekspor ke:\n{file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Gagal", f"Gagal mengekspor playlist: {e}")

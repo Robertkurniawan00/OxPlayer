@@ -5,6 +5,7 @@
 **Modern, Ultra-Fast, Hardware-Accelerated Multimedia Player for Windows**
 
 [![Python Version](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue?logo=python)](https://python.org)
+[![Multi-Language](https://img.shields.io/badge/Multi--Language-C%20%7C%20C%2B%2B%20%7C%20C%23%20%7C%20Rust-purple)](src_native/)
 [![Framework](https://img.shields.io/badge/GUI-PyQt6-green?logo=qt)](https://riverbankcomputing.com/software/pyqt/)
 [![Engine](https://img.shields.io/badge/Engine-LibVLC%20Direct3D-orange?logo=vlc)](https://www.videolan.org/vlc/libvlc.html)
 [![Platform](https://img.shields.io/badge/Platform-Windows%207%20%7C%208%20%7C%2010%20%7C%2011-0078D6?logo=windows)](https://microsoft.com/windows)
@@ -54,6 +55,12 @@
 - **Bookmark Manager (B)**: Simpan timestamp penting dalam video dengan catatan kustom.
 - **Continue Watching (Ctrl+Y)**: Riwayat tontonan kaya dengan kartu visual, progress bar, dan fitur pencarian.
 - **Network Stream (Ctrl+U)**: Putar streaming langsung dari URL (HTTP, HTTPS, RTSP, HLS, UDP).
+
+### 7. Multi-Language High-Performance Architecture
+- **C++ Audio DSP Accelerator (`ox_dsp_accel.dll`)**: Real-time Cooley-Tukey Radix-2 FFT frequency bands analyzer, 10-band biquad equalizer filter, RMS/Peak metering, dan dynamic soft limiter.
+- **C# (.NET) Media CLI Utility (`OXMediaCLI.exe`)**: Standalone command-line media inspector, folder scanner, integrity validator, dan M3U8 playlist generator.
+- **Rust Subtitle & Indexer Engine (`ox_sub_indexer.dll`)**: Zero-copy SRT/VTT subtitle parser, binary cue lookup, dan fuzzy search ranking berkecepatan tinggi untuk pencarian judul playlist.
+- **C Win32 Silent Launcher (`OXPlayerLauncher.exe`)**: Launcher biner native Win32 (<200 KB) dengan embedded icon, single-instance management, dan eksekusi instan tanpa flash konsol hitam.
 
 ---
 

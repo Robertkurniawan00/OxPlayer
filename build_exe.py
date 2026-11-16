@@ -67,6 +67,9 @@ def build():
         "--hidden-import=src.playlist",
         "--hidden-import=src.osd",
         "--hidden-import=src.styles",
+        "--hidden-import=src.dsp_accel",
+        "--hidden-import=src.sub_indexer",
+        "--hidden-import=src.visualizer",
         "--hidden-import=ctypes",
         "--hidden-import=ctypes.wintypes",
         "--hidden-import=PIL",
@@ -119,8 +122,10 @@ def build():
     os.makedirs(dest_dir, exist_ok=True)
     if vlc_source:
         print(f"[*] Copying core media runtime libraries from: {vlc_source}")
-        for dll in ["libvlc.dll", "libvlccore.dll"]:
-            src_dll = os.path.join(vlc_source, dll)
+        for dll in ["libvlc.dll", "libvlccore.dll", "ox_dsp_accel.dll", "ox_sub_indexer.dll", "OXPlayerLauncher.exe", "OXMediaCLI.exe"]:
+            src_dll = os.path.join(project_dir, "core_bin", dll)
+            if not os.path.exists(src_dll) and vlc_source:
+                src_dll = os.path.join(vlc_source, dll)
             if os.path.exists(src_dll):
                 shutil.copy2(src_dll, dest_dir)
 

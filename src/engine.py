@@ -1378,6 +1378,22 @@ class PlayerEngine:
         except Exception as e:
             print("[!] set_surround_mode error:", e)
 
+    def compute_visualizer_bands(self, raw_samples: List[float], num_bands: int = 32) -> List[float]:
+        """Uses native C++ DSP Accelerator to compute real-time FFT frequency bands."""
+        try:
+            from src.dsp_accel import compute_fft_bands
+            return compute_fft_bands(raw_samples, num_bands)
+        except Exception:
+            return [0.0] * num_bands
+
+    def get_audio_dsp_levels(self, raw_samples: List[float]) -> Tuple[float, float]:
+        """Returns (rms_level, peak_level) computed via C++ DSP accelerator."""
+        try:
+            from src.dsp_accel import calculate_audio_levels
+            return calculate_audio_levels(raw_samples)
+        except Exception:
+            return 0.0, 0.0
+
     # --- A-B Repeat Loop ---
     def set_ab_point_a(self, ms: Optional[int] = None):
         self.ab_a_ms = self.get_time() if ms is None else ms

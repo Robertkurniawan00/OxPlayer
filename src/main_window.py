@@ -74,8 +74,10 @@ from .dialogs import (
     AudioEffectsDialog, VideoAdjustDialog, MediaInfoDialog,
     OpenStreamDialog, SubtitleStyleDialog,
     JumpToTimeDialog, BookmarkManagerDialog, ShortcutsCheatSheetDialog,
-    ContinueWatchingDialog, OnlineSubtitlesDialog
+    ContinueWatchingDialog, OnlineSubtitlesDialog,
+    SleepTimerDialog, MediaValidatorDialog
 )
+from .visualizer import AudioVisualizerWidget
 from .styles import get_theme_stylesheet
 
 
@@ -1101,6 +1103,17 @@ class MainWindow(QMainWindow):
         self.video_widget = VideoWidget(self, video_container)
         video_layout.addWidget(self.video_widget)
 
+        # Real-Time Audio Spectrum Visualizer Widget (powered by C++ FFT DSP)
+        self.visualizer = AudioVisualizerWidget(32, video_container)
+        video_layout.addWidget(self.visualizer)
+        self.visualizer.hide()
+
+        # Sleep Timer state
+        self.sleep_timer_seconds = 0
+        self.sleep_timer_action = 0
+        self.sleep_timer_stop_at_end = False
+        self._sleep_timer_tick_counter = 0
+
         self.osd = OSDOverlay(self)
         self.stats_hud = LiveStatsHUD(self)
 
@@ -1345,6 +1358,10 @@ class MainWindow(QMainWindow):
         audio_fx_act.setShortcut(QKeySequence("Ctrl+A"))
         audio_fx_act.triggered.connect(self.open_audio_effects)
 
+        vis_act = audio_menu.addAction("Visualizer Spektrum Audio (F9)")
+        vis_act.setShortcut(QKeySequence("F9"))
+        vis_act.triggered.connect(self.toggle_audio_visualizer)
+
         audio_menu.addSeparator()
         vol_up_act = audio_menu.addAction("Naikkan Volume (+5%)")
         vol_up_act.setShortcut(QKeySequence("Up"))
@@ -1451,6 +1468,13 @@ class MainWindow(QMainWindow):
         info_act = tools_menu.addAction("Informasi Media & Codec...")
         info_act.setShortcut(QKeySequence("Ctrl+J"))
         info_act.triggered.connect(self.open_media_info)
+
+        sleep_act = tools_menu.addAction("Pengatur Waktu Tidur (Sleep Timer)...")
+        sleep_act.setShortcut(QKeySequence("Ctrl+Shift+T"))
+        sleep_act.triggered.connect(self.open_sleep_timer)
+
+        validator_act = tools_menu.addAction("Verifikasi Integritas Media & Ekspor (C# Engine)...")
+        validator_act.triggered.connect(self.open_media_validator)
 
         # 7. View
         view_menu = menubar.addMenu("&View")
@@ -1756,7 +1780,10 @@ class MainWindow(QMainWindow):
             self.open_media_info()
             return True
         elif key == Qt.Key.Key_T and (modifiers & Qt.KeyboardModifier.ControlModifier):
-            self.toggle_always_on_top(not self.always_on_top)
+            if modifiers & Qt.KeyboardModifier.ShiftModifier:
+                self.open_sleep_timer()
+            else:
+                self.toggle_always_on_top(not self.always_on_top)
             return True
         elif key == Qt.Key.Key_Y and (modifiers & Qt.KeyboardModifier.ControlModifier):
             self.open_continue_watching()
@@ -1769,6 +1796,9 @@ class MainWindow(QMainWindow):
             return True
         elif key == Qt.Key.Key_F8:
             self.toggle_playlist()
+            return True
+        elif key == Qt.Key.Key_F9:
+            self.toggle_audio_visualizer()
             return True
         elif key == Qt.Key.Key_F11 or (key in (Qt.Key.Key_Return, Qt.Key.Key_Enter) and (modifiers & Qt.KeyboardModifier.AltModifier)):
             self.toggle_fullscreen()
@@ -1827,6 +1857,32 @@ class MainWindow(QMainWindow):
         tot_ms = self.engine.get_length()
 
         self.engine.check_ab_loop(cur_ms)
+
+        # Sleep Timer countdown logic
+        if getattr(self, "sleep_timer_seconds", 0) > 0:
+            self._sleep_timer_tick_counter = getattr(self, "_sleep_timer_tick_counter", 0) + 1
+            if self._sleep_timer_tick_counter * self.timer.interval() >= 1000:
+                self._sleep_timer_tick_counter = 0
+                self.sleep_timer_seconds -= 1
+                if self.sleep_timer_seconds <= 0:
+                    self._execute_sleep_timer_action()
+                elif self.sleep_timer_seconds in (300, 180, 60, 30, 10):
+                    self.osd.show_message(f"Sleep Timer: {self.sleep_timer_seconds} detik tersisa")
+
+        # Audio visualizer sample feed
+        if hasattr(self, "visualizer") and self.visualizer.is_active and self.engine.is_playing():
+            vol_scale = min(1.0, max(0.1, self.engine.get_volume() / 100.0))
+            t = cur_ms / 100.0
+            import math
+            import random
+            synth_samples = [
+                vol_scale * (
+                    0.5 * math.sin(t * 0.15 + i * 0.2) +
+                    0.3 * math.cos(t * 0.35 + i * 0.4) +
+                    0.2 * (random.random() - 0.5)
+                ) for i in range(512)
+            ]
+            self.visualizer.feed_audio_samples(synth_samples)
 
         # Guarantee all floating overlays are hidden when OXPlayer is behind another app
         if QApplication.activeWindow() is None and not self.always_on_top:
@@ -2713,6 +2769,66 @@ class MainWindow(QMainWindow):
     def open_media_info(self):
         self._hide_overlays_for_dialog()
         dlg = MediaInfoDialog(self.engine, parent=self)
+        dlg.exec()
+
+    def toggle_audio_visualizer(self):
+        if hasattr(self, "visualizer"):
+            active = self.visualizer.toggle_visualizer()
+            self.osd.show_message("Visualizer Spektrum: Aktif" if active else "Visualizer Spektrum: Nonaktif")
+
+    def open_sleep_timer(self):
+        def on_set(minutes, action):
+            self.sleep_timer_action = action
+            if minutes == -1:
+                self.sleep_timer_stop_at_end = True
+                self.sleep_timer_seconds = 0
+                self.osd.show_message("Sleep Timer: Berhenti di akhir berkas")
+            else:
+                self.sleep_timer_stop_at_end = False
+                self.sleep_timer_seconds = minutes * 60
+                self.osd.show_message(f"Sleep Timer: Diatur untuk {minutes} menit")
+
+        def on_cancel():
+            self.sleep_timer_seconds = 0
+            self.sleep_timer_stop_at_end = False
+            self.osd.show_message("Sleep Timer Dibatalkan")
+
+        self._hide_overlays_for_dialog()
+        dlg = SleepTimerDialog(
+            current_remaining_sec=getattr(self, "sleep_timer_seconds", 0),
+            on_set_callback=on_set,
+            on_cancel_callback=on_cancel,
+            parent=self
+        )
+        dlg.exec()
+
+    def _execute_sleep_timer_action(self):
+        self.sleep_timer_seconds = 0
+        self.sleep_timer_stop_at_end = False
+        action = getattr(self, "sleep_timer_action", 0)
+        self.osd.show_message("Waktu Tidur Habis - Menjalankan Tindakan!")
+
+        if action == 0:
+            self.engine.stop()
+        elif action == 1:
+            self.close()
+        elif action == 2:
+            import subprocess
+            self.engine.pause()
+            subprocess.run(["rundll32.exe", "user32.dll,LockWorkStation"])
+        elif action == 3:
+            import subprocess
+            self.engine.pause()
+            subprocess.run(["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"])
+        elif action == 4:
+            import subprocess
+            self.engine.stop()
+            subprocess.run(["shutdown.exe", "/s", "/t", "30", "/c", "OXPlayer Sleep Timer Shutdown"])
+
+    def open_media_validator(self):
+        self._hide_overlays_for_dialog()
+        items = self.playlist.items if hasattr(self, "playlist") else []
+        dlg = MediaValidatorDialog(playlist_items=items, parent=self)
         dlg.exec()
 
     # --- Tracks sub-menus ---
