@@ -19,13 +19,13 @@
   <b>OXPlayer</b> is a standalone, lightweight, and modern media player built on <b>PyQt6</b> and powered by the <b>LibVLC</b> engine. Engineered with native Direct3D rendering, responsive floating controls, automatic episode discovery, and true aspect ratio preservation.
 </p>
 
-[Fitur Utama](#-fitur-utama) • [Instalasi](#-instalasi) • [Jalankan dari Source](#-menjalankan-dari-source-code) • [Shortcut Keyboard](#-shortcut-keyboard) • [Kompilasi Executable](#-kompilasi-executable--installer) • [Lisensi](#-lisensi)
+[Fitur Utama](#fitur-utama-key-features) • [Instalasi](#instalasi-windows-installer) • [Jalankan dari Source](#menjalankan-dari-source-code) • [Shortcut Keyboard](#shortcut-keyboard-cheat-sheet) • [Kompilasi Executable](#kompilasi-executable--installer) • [Lisensi](#lisensi)
 
 </div>
 
 ---
 
-## 🌟 Fitur Utama (Key Features)
+## Fitur Utama (Key Features)
 
 ### 1. Hardware Accelerated Rendering & Native Aspect Ratio
 - **LibVLC Direct3D Backend**: Akselerasi hardware GPU penuh untuk pemutaran video beresolusi hingga 4K/8K tanpa stuttering.
@@ -64,7 +64,7 @@
 
 ---
 
-## 📥 Instalasi (Windows Installer)
+## Instalasi (Windows Installer)
 
 Bagi pengguna akhir di Windows 7, 8, 8.1, 10, dan 11 (64-bit):
 
@@ -78,7 +78,7 @@ Bagi pengguna akhir di Windows 7, 8, 8.1, 10, dan 11 (64-bit):
 
 ---
 
-## 🛠 Menjalankan dari Source Code
+## Menjalankan dari Source Code
 
 ### Prasyarat:
 - Python 3.10, 3.11, atau 3.12 (64-bit)
@@ -111,7 +111,7 @@ Bagi pengguna akhir di Windows 7, 8, 8.1, 10, dan 11 (64-bit):
 
 ---
 
-## ⌨️ Shortcut Keyboard (Cheat Sheet)
+## Shortcut Keyboard (Cheat Sheet)
 
 | Shortcut | Fungsi |
 |---|---|
@@ -143,7 +143,7 @@ Bagi pengguna akhir di Windows 7, 8, 8.1, 10, dan 11 (64-bit):
 
 ---
 
-## 📦 Kompilasi Executable & Installer
+## Kompilasi Executable & Installer
 
 OXPlayer menyertakan skrip otomatisasi build lengkap dengan PyInstaller:
 
@@ -158,7 +158,7 @@ Skrip ini akan memproduksi:
 
 ---
 
-## 📂 Struktur Repositori
+## Struktur Repositori
 
 ```text
 OXPlayer/
@@ -187,12 +187,12 @@ OXPlayer/
 
 ---
 
-## 📄 Lisensi
+## Lisensi
 
 OXPlayer didistribusikan di bawah lisensi **GNU General Public License v3.0 (GPLv3)**. Lihat file [LICENSE](LICENSE) untuk informasi lebih lanjut.
 
 ---
 
 <div align="center">
-  <sub>Dibangun dengan ❤️ menggunakan Python, PyQt6, dan LibVLC.</sub>
+  <sub>Dibangun menggunakan Python, PyQt6, dan LibVLC.</sub>
 </div>
